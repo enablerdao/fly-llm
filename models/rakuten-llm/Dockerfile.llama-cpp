@@ -1,0 +1,38 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone llama.cpp repository
+RUN git clone https://github.com/ggerganov/llama.cpp.git
+
+# Build llama.cpp
+WORKDIR /app/llama.cpp
+RUN mkdir build && cd build && cmake .. && cmake --build . --config Release
+
+# Install Python requirements
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Create models directory
+RUN mkdir -p /app/models
+
+# We'll mount the volume at runtime instead of downloading the model during build
+# This saves build time and allows for model updates without rebuilding
+
+# Copy server code
+COPY server.py .
+
+# Expose the port
+EXPOSE 8000
+
+# Start the server
+CMD ["python", "server.py"]

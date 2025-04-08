@@ -1,4 +1,4 @@
-app = "litellm-proxy-yuki"
+app = "fly-llm-api"
 primary_region = "nrt"  # Tokyo region, change as needed
 
 [build]

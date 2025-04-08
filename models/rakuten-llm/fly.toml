@@ -1,0 +1,30 @@
+app = "rakuten-llm-server"
+primary_region = "nrt"  # Tokyo region
+
+[build]
+  dockerfile = "Dockerfile.llama-cpp"
+
+[env]
+  MODEL_PATH = "/app/models/rakuten-model.gguf"
+  CONTEXT_LENGTH = "4096"
+  GPU_LAYERS = "0"  # CPU only for now
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "dedicated"
+  cpus = 2
+  memory_mb = 8192  # 8GB RAM
+
+[mounts]
+  source = "rakuten_model_data"
+  destination = "/app/models"
+
+[deploy]
+  release_command = "wget -O /app/models/rakuten-model.gguf https://huggingface.co/staccat0/RakutenAI-2.0-mini-instruct-Q8_0-GGUF/resolve/main/RakutenAI-2.0-mini-instruct-Q8_0.gguf"

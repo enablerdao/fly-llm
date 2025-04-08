@@ -1,169 +1,170 @@
-# LiteLLM Proxy with Rakuten LLM
+# Fly-LLM: 統合AIプロキシサービス
 
-This project sets up a LiteLLM proxy server on Fly.io to provide LLM services to users with API key authentication, enhanced with privacy protection, cost optimization features, and integration with a self-hosted Rakuten LLM.
+Fly-LLMは、複数のLLMプロバイダーへのアクセスを単一のAPIで提供する統合AIプロキシサービスです。自動モデル選択、コスト最適化、プライバシー保護機能を備えています。
 
-## Features
+## 主な機能
 
-- OpenAI-compatible API endpoints
-- API key management (create, list, delete)
-- Model routing to different LLM providers
-- Usage tracking and cost monitoring
-- CORS support for web applications
-- **Automatic model selection** based on prompt content
-- **Rakuten LLM integration** for e-commerce related queries
+- **統合API**: OpenAI互換APIを通じて複数のLLMプロバイダーにアクセス
+- **自動モデル選択**: 言語、複雑さ、タスクタイプに基づいて最適なモデルを自動選択
+- **コスト最適化**: インテリジェントなキャッシング、予算管理、モデルフォールバック
+- **プライバシー保護**: 個人情報の自動検出とマスキング
+- **Stripe決済統合**: クレジットカード決済によるAPIクレジットのチャージ
+- **楽天LLM統合**: 日本語Eコマースクエリに特化したモデル
+- **APIキー管理**: 作成、リスト表示、削除、使用量制限の設定
 
-### Privacy Protection Features
+## アーキテクチャ
 
-- **PII Detection and Masking**: Automatically detects and masks personal identifiable information (PII) such as:
-  - Email addresses
-  - Phone numbers
-  - Credit card numbers
-  - Physical addresses
-  - Names in various formats
+システムは以下のコンポーネントで構成されています：
 
-- **API Key Protection**: Prevents API keys from being sent to LLM providers
+1. **LiteLLM Proxy**: メインのAPIプロキシサーバー
+   - OpenAI互換API
+   - モデルルーティング
+   - APIキー管理
+   - 使用量追跡
 
-- **Request Sanitization**: Removes sensitive parameters from requests before processing
+2. **Rakuten LLM Server**: 日本語特化モデル用サーバー
+   - llama.cpp + GGUF形式モデル
+   - 低リソース要件
+   - 高速推論
 
-### Cost Optimization Features
+3. **Stripe決済システム**: 支払い処理
+   - クレジットカード決済
+   - 使用量に応じた課金
+   - クレジット管理
 
-- **Budget Management**:
-  - Set global budget limits
-  - Set per-user budget limits
-  - Track usage in real-time
+## デプロイ構成
 
-- **Caching**:
-  - Redis-based response caching
-  - Configurable TTL (Time-To-Live)
-  - Reduces duplicate requests to LLM providers
+サービスはFly.ioにデプロイされています：
 
-- **Model Fallbacks**:
-  - Automatically falls back to cheaper models when appropriate
-  - Context window optimization
-  - Token usage optimization
+- **メインプロキシ**: https://fly-llm-api.fly.dev/
+  - 標準VMで動作
+  - Redis for caching
+  - API管理
 
-- **Rate Limiting**:
-  - Prevents excessive usage
-  - Configurable limits per user/API key
+- **Rakuten LLMサーバー**: https://rakuten-llm-server.fly.dev/
+  - 専用VM (2 CPU, 8GB RAM)
+  - 永続ボリューム (10GB)
+  - llama.cpp推論エンジン
 
-## Deployment
+## 使用方法
 
-### Prerequisites
+### APIキーの取得
 
-- Fly.io account
-- Fly CLI installed
-- OpenAI API key (or other LLM provider keys)
+1. 管理パネル (https://fly-llm-api.fly.dev/admin) にアクセス
+2. 新しいAPIキーを作成
+3. クレジットをチャージ (Stripe決済)
 
-### Steps to Deploy
+### APIリクエスト
 
-1. Log in to Fly.io:
-   ```
-   fly auth login
-   ```
+```bash
+curl -X POST https://fly-llm-api.fly.dev/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "auto",
+    "messages": [{"role": "user", "content": "What is the capital of Japan?"}]
+  }'
+```
 
-2. Create a Fly.io app:
-   ```
-   fly apps create litellm-proxy
-   ```
+### 自動モデル選択
 
-3. Create a volume for persistent data:
-   ```
-   fly volumes create litellm_data --size 1 --region nrt
-   ```
+`"model": "auto"`を指定すると、システムが最適なモデルを自動選択します。
 
-4. Set your API keys as secrets:
-   ```
-   fly secrets set OPENAI_API_KEY=your_openai_api_key
-   fly secrets set ANTHROPIC_API_KEY=your_anthropic_api_key
-   ```
+### 特定モデルの指定
 
-5. Deploy the application:
-   ```
-   fly deploy
-   ```
+```bash
+curl -X POST https://fly-llm-api.fly.dev/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4",
+    "messages": [{"role": "user", "content": "Explain quantum computing"}]
+  }'
+```
 
-6. Access your proxy at:
-   ```
-   https://litellm-proxy.fly.dev
-   ```
+## 料金プラン
 
-## API Usage
+- **スターター**: $10 / ¥1,000 (最低チャージ額)
+- **プロ**: $50 / ¥5,000 (5%ボーナスクレジット)
+- **エンタープライズ**: $200 / ¥20,000 (10%ボーナスクレジット)
 
-### Authentication
+## 開発者向け情報
 
-All API requests require an API key in the `Authorization` header:
+### ローカル開発環境のセットアップ
+
+```bash
+# リポジトリのクローン
+git clone https://github.com/enablerdao/fly-llm.git
+cd fly-llm
+
+# 依存関係のインストール
+pip install -r requirements.txt
+
+# 環境変数の設定
+cp .env.sample .env
+# .envファイルを編集してAPIキーを設定
+
+# サーバーの起動
+python main.py
+```
+
+### Fly.ioへのデプロイ
+
+```bash
+# Fly.ioのセットアップ
+fly auth login
+
+# アプリのデプロイ
+fly deploy
+
+# シークレットの設定
+fly secrets set OPENAI_API_KEY=sk-xxx ANTHROPIC_API_KEY=sk-ant-xxx
+```
+
+### APIエンドポイント
+
+#### 認証
+
+すべてのAPIリクエストには`Authorization`ヘッダーにAPIキーが必要です：
 
 ```
 Authorization: Bearer your_api_key
 ```
 
-### API Key Management
+#### APIキー管理
 
-- Create a new API key:
+- 新しいAPIキーの作成:
   ```
   POST /api/keys
   ```
-  Parameters:
+  パラメータ:
   ```json
   {
-    "name": "user-name",
+    "name": "ユーザー名",
     "expires_at": "2025-12-31T23:59:59Z",
     "models": ["gpt-3.5-turbo", "gpt-4"],
     "max_budget": 50.0
   }
   ```
 
-- List all API keys:
+- APIキー一覧の取得:
   ```
   GET /api/keys
   ```
 
-- Delete an API key:
+- APIキーの削除:
   ```
   DELETE /api/keys/{key_id}
   ```
 
-- Get usage statistics:
+- 使用統計の取得:
   ```
   GET /api/usage?key_id=sk-your-key-id
   ```
 
-### LLM API Endpoints
+#### 自動モデル選択の詳細設定
 
-The proxy provides OpenAI-compatible endpoints:
-
-- Chat completions:
-  ```
-  POST /v1/chat/completions
-  ```
-
-- Completions:
-  ```
-  POST /v1/completions
-  ```
-
-- Embeddings:
-  ```
-  POST /v1/embeddings
-  ```
-
-### Automatic Model Selection
-
-Use the automatic model selection feature by specifying `"auto"` as the model:
-
-```bash
-curl -X POST https://your-litellm-proxy/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -d '{
-    "model": "auto",
-    "messages": [{"role": "user", "content": "楽天で買える良いスマートフォンを教えてください"}]
-  }'
-```
-
-This example will detect e-commerce related keywords ("楽天", "買える") and Japanese language, and automatically select the Rakuten LLM.
-
-You can also provide preferences to guide the selection:
+自動モデル選択機能を使用する際に、ユーザー設定を指定できます：
 
 ```json
 {
@@ -177,12 +178,12 @@ You can also provide preferences to guide the selection:
 }
 ```
 
-### Using Rakuten LLM Directly
+#### 楽天LLMの直接使用
 
-To use the Rakuten LLM directly, specify it as the model:
+楽天LLMを直接使用するには、モデルとして指定します：
 
 ```bash
-curl -X POST https://your-litellm-proxy/v1/chat/completions \
+curl -X POST https://fly-llm-api.fly.dev/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -191,46 +192,55 @@ curl -X POST https://your-litellm-proxy/v1/chat/completions \
   }'
 ```
 
-## Configuration
+## 設定
 
-Edit the `config.yaml` file to:
-- Add more models
-- Configure rate limits
-- Set up model fallbacks
-- Configure caching
-- Set budget limits
+`config.yaml`ファイルを編集して以下の設定が可能です：
+- モデルの追加
+- レート制限の設定
+- モデルフォールバックの設定
+- キャッシュの設定
+- 予算制限の設定
 
-## Environment Variables
+## 環境変数
 
-- `ENABLE_CACHING`: Enable/disable caching (default: true)
-- `CACHE_TTL`: Cache time-to-live in seconds (default: 3600)
-- `MAX_TOKENS_PER_REQUEST`: Maximum tokens per request (default: 4000)
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `ANTHROPIC_API_KEY`: Your Anthropic API key
-- `RAKUTEN_LLM_API_BASE`: URL of your Rakuten LLM server
+- `ENABLE_CACHING`: キャッシュの有効/無効 (デフォルト: true)
+- `CACHE_TTL`: キャッシュの有効期間（秒） (デフォルト: 3600)
+- `MAX_TOKENS_PER_REQUEST`: リクエストあたりの最大トークン数 (デフォルト: 4000)
+- `OPENAI_API_KEY`: OpenAI APIキー
+- `ANTHROPIC_API_KEY`: Anthropic APIキー
+- `RAKUTEN_LLM_API_BASE`: 楽天LLMサーバーのURL
 
-## Running with Docker Compose
+## Dockerでの実行
 
-You can run the entire stack (LiteLLM Proxy, Rakuten LLM, and Redis) using Docker Compose:
+Docker Composeを使用して全スタック（LiteLLM Proxy、Rakuten LLM、Redis）を実行できます：
 
 ```bash
 docker-compose up -d
 ```
 
-This will:
-1. Build and start the LiteLLM Proxy
-2. Build and start the Rakuten LLM server
-3. Start a Redis server for caching
+これにより以下が実行されます：
+1. LiteLLM Proxyのビルドと起動
+2. Rakuten LLMサーバーのビルドと起動
+3. キャッシュ用Redisサーバーの起動
 
-## About Rakuten LLM
+## 楽天LLMについて
 
-The Rakuten LLM is based on [rinna/japanese-gpt-neox-3.6b-instruction-ppo](https://huggingface.co/rinna/japanese-gpt-neox-3.6b-instruction-ppo), a Japanese language model fine-tuned for instruction following. It has been further optimized for e-commerce related queries and product recommendations.
+楽天LLMは[RakutenAI-2.0-mini-instruct](https://huggingface.co/staccat0/RakutenAI-2.0-mini-instruct-Q8_0-GGUF)をベースにしており、GGUF形式に量子化されています。llama.cppを使用して低リソースでの推論が可能です。
 
-Features:
-- Optimized for Japanese language
-- Specialized knowledge about products and shopping
-- Integrated with the automatic model selection system
+特徴：
+- 日本語に最適化
+- 商品や買い物に関する専門知識
+- 自動モデル選択システムとの統合
+- 低リソース要件（CPU推論可能）
 
-## License
+## 技術スタック
+
+- **バックエンド**: FastAPI, Python, LiteLLM
+- **データベース**: Redis, ファイルベースJSON
+- **決済**: Stripe
+- **推論エンジン**: llama.cpp
+- **デプロイ**: Fly.io
+
+## ライセンス
 
 MIT
