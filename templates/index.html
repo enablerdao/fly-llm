@@ -2,81 +2,583 @@
 
 {% block title %}LiteLLM Proxy - Home{% endblock %}
 
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #4a00e0, #8e2de2);
+        color: white;
+        padding: 80px 0;
+        border-radius: 10px;
+        margin-bottom: 40px;
+    }
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        color: #6c5ce7;
+    }
+    .pricing-card {
+        transition: transform 0.3s ease;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .pricing-card:hover {
+        transform: translateY(-10px);
+    }
+    .pricing-header {
+        background: linear-gradient(135deg, #4a00e0, #8e2de2);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    .price {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    .btn-gradient {
+        background: linear-gradient(135deg, #4a00e0, #8e2de2);
+        color: white;
+        border: none;
+    }
+    .btn-gradient:hover {
+        background: linear-gradient(135deg, #3a00b0, #7e1dd2);
+        color: white;
+    }
+    .model-badge {
+        background-color: #f0f0f0;
+        border-radius: 20px;
+        padding: 5px 15px;
+        margin: 5px;
+        display: inline-block;
+        font-size: 0.9rem;
+    }
+    .testimonial-card {
+        border-left: 4px solid #6c5ce7;
+    }
+    .code-block {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- Hero Section -->
 <div class="row">
-    <div class="col-md-12 text-center mb-5">
-        <h1 class="display-4">Welcome to LiteLLM Proxy</h1>
-        <p class="lead">A secure and cost-efficient proxy for Large Language Models</p>
+    <div class="col-md-12">
+        <div class="hero-section text-center">
+            <h1 class="display-3 mb-4">Unified AI API Platform</h1>
+            <p class="lead mb-4">Access multiple LLM providers through a single API with automatic model selection, cost optimization, and privacy protection</p>
+            <div class="d-flex justify-content-center">
+                <a href="#pricing" class="btn btn-light btn-lg me-3">Get Started</a>
+                <a href="/docs" class="btn btn-outline-light btn-lg">API Docs</a>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="row">
+<!-- Features Section -->
+<div class="row mb-5">
+    <div class="col-md-12 text-center mb-4">
+        <h2>Key Features</h2>
+        <p class="lead text-muted">Why choose our LiteLLM Proxy service?</p>
+    </div>
+    
     <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Privacy Protection</h5>
-                <p class="card-text">Automatically detects and masks personal identifiable information (PII) such as email addresses, phone numbers, and credit card numbers.</p>
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h4 class="card-title">Automatic Model Selection</h4>
+                <p class="card-text">Our intelligent system analyzes your prompt and selects the most appropriate LLM based on language, complexity, and task type.</p>
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item">Email masking</li>
-                    <li class="list-group-item">Phone number protection</li>
-                    <li class="list-group-item">Credit card security</li>
+                    <li class="list-group-item border-0">Language detection</li>
+                    <li class="list-group-item border-0">Task complexity analysis</li>
+                    <li class="list-group-item border-0">Cost-performance optimization</li>
                 </ul>
             </div>
         </div>
     </div>
+    
     <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Cost Optimization</h5>
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h4 class="card-title">Privacy Protection</h4>
+                <p class="card-text">Automatically detects and masks personal identifiable information (PII) before sending to LLM providers.</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item border-0">Email & phone masking</li>
+                    <li class="list-group-item border-0">Credit card protection</li>
+                    <li class="list-group-item border-0">Personal data security</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <h4 class="card-title">Cost Optimization</h4>
                 <p class="card-text">Reduce your LLM costs with intelligent caching, budget management, and model fallbacks.</p>
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item">Response caching</li>
-                    <li class="list-group-item">Budget controls</li>
-                    <li class="list-group-item">Model fallbacks</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">API Management</h5>
-                <p class="card-text">Create and manage API keys with fine-grained controls and usage tracking.</p>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">API key generation</li>
-                    <li class="list-group-item">Usage statistics</li>
-                    <li class="list-group-item">Rate limiting</li>
+                    <li class="list-group-item border-0">Response caching</li>
+                    <li class="list-group-item border-0">Budget controls</li>
+                    <li class="list-group-item border-0">Model fallbacks</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4">
+<!-- Supported Models Section -->
+<div class="row mb-5">
+    <div class="col-md-12 text-center mb-4">
+        <h2>Supported Models</h2>
+        <p class="lead text-muted">Access multiple LLM providers through a single API</p>
+    </div>
+    
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5>Quick Start Guide</h5>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <span class="model-badge">GPT-4</span>
+                    <span class="model-badge">GPT-3.5-Turbo</span>
+                    <span class="model-badge">Claude-3-Opus</span>
+                    <span class="model-badge">Claude-3-Sonnet</span>
+                    <span class="model-badge">Claude-3-Haiku</span>
+                    <span class="model-badge">Mistral-Large</span>
+                    <span class="model-badge">Mistral-Medium</span>
+                    <span class="model-badge">Gemini-Pro</span>
+                    <span class="model-badge">Rakuten-LLM</span>
+                    <span class="model-badge">DeepSeek-Chat</span>
+                    <span class="model-badge">+ Custom Models</span>
+                </div>
+                <p>Use our automatic model selection or specify exactly which model you want to use.</p>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Code Example Section -->
+<div class="row mb-5">
+    <div class="col-md-12 text-center mb-4">
+        <h2>Easy to Use</h2>
+        <p class="lead text-muted">Simple API compatible with OpenAI clients</p>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <h6>1. Get your API key</h6>
-                <p>Visit the <a href="/admin">Admin Panel</a> to create or manage API keys.</p>
-                
-                <h6>2. Make API requests</h6>
-                <div class="bg-light p-3 rounded">
+                <h4 class="card-title">Automatic Model Selection</h4>
+                <div class="code-block">
                     <pre><code>curl -X POST https://{{ host }}/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "gpt-3.5-turbo",
-    "messages": [{"role": "user", "content": "Hello, how are you?"}]
+    "model": "auto",
+    "messages": [{"role": "user", "content": "What is the capital of Japan?"}]
   }'</code></pre>
                 </div>
-                
-                <h6>3. View API documentation</h6>
-                <p>Check the <a href="/docs">API Documentation</a> for detailed information about available endpoints.</p>
+                <p class="card-text">Just specify <code>"model": "auto"</code> and our system will select the best model for your query.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h4 class="card-title">Specific Model Selection</h4>
+                <div class="code-block">
+                    <pre><code>curl -X POST https://{{ host }}/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4",
+    "messages": [{"role": "user", "content": "Explain quantum computing"}]
+  }'</code></pre>
+                </div>
+                <p class="card-text">Or specify exactly which model you want to use for complete control.</p>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Pricing Section -->
+<div class="row mb-5" id="pricing">
+    <div class="col-md-12 text-center mb-4">
+        <h2>Simple Pricing</h2>
+        <p class="lead text-muted">Pay only for what you use, with no hidden fees</p>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card pricing-card h-100">
+            <div class="pricing-header text-center">
+                <h4>Starter</h4>
+                <div class="price">$10</div>
+                <p>Minimum top-up amount</p>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item border-0">Access to all models</li>
+                    <li class="list-group-item border-0">Pay-as-you-go pricing</li>
+                    <li class="list-group-item border-0">Basic support</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <button class="btn btn-gradient btn-lg" id="checkout-button-starter">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card pricing-card h-100">
+            <div class="pricing-header text-center">
+                <h4>Pro</h4>
+                <div class="price">$50</div>
+                <p>Recommended for regular users</p>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item border-0">Access to all models</li>
+                    <li class="list-group-item border-0">5% bonus credit</li>
+                    <li class="list-group-item border-0">Priority support</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <button class="btn btn-gradient btn-lg" id="checkout-button-pro">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card pricing-card h-100">
+            <div class="pricing-header text-center">
+                <h4>Enterprise</h4>
+                <div class="price">$200</div>
+                <p>For high-volume users</p>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item border-0">Access to all models</li>
+                    <li class="list-group-item border-0">10% bonus credit</li>
+                    <li class="list-group-item border-0">Dedicated support</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <button class="btn btn-gradient btn-lg" id="checkout-button-enterprise">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Japanese Pricing Section -->
+<div class="row mb-5">
+    <div class="col-md-12 text-center mb-4">
+        <h2>日本円でのお支払い</h2>
+        <p class="lead text-muted">日本からのお客様向け料金プラン</p>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card pricing-card h-100">
+            <div class="pricing-header text-center">
+                <h4>スターター</h4>
+                <div class="price">¥1,000</div>
+                <p>最低チャージ額</p>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item border-0">全モデルへのアクセス</li>
+                    <li class="list-group-item border-0">従量課金制</li>
+                    <li class="list-group-item border-0">基本サポート</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <button class="btn btn-gradient btn-lg" id="checkout-button-starter-jpy">申し込む</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card pricing-card h-100">
+            <div class="pricing-header text-center">
+                <h4>プロ</h4>
+                <div class="price">¥5,000</div>
+                <p>定期的なご利用におすすめ</p>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item border-0">全モデルへのアクセス</li>
+                    <li class="list-group-item border-0">5%ボーナスクレジット</li>
+                    <li class="list-group-item border-0">優先サポート</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <button class="btn btn-gradient btn-lg" id="checkout-button-pro-jpy">申し込む</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card pricing-card h-100">
+            <div class="pricing-header text-center">
+                <h4>エンタープライズ</h4>
+                <div class="price">¥20,000</div>
+                <p>大量利用向け</p>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item border-0">全モデルへのアクセス</li>
+                    <li class="list-group-item border-0">10%ボーナスクレジット</li>
+                    <li class="list-group-item border-0">専任サポート</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <button class="btn btn-gradient btn-lg" id="checkout-button-enterprise-jpy">申し込む</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Testimonials Section -->
+<div class="row mb-5">
+    <div class="col-md-12 text-center mb-4">
+        <h2>What Our Customers Say</h2>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card testimonial-card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <p class="card-text">"The automatic model selection feature has saved us both time and money. It intelligently chooses the right model for each task."</p>
+                <div class="d-flex align-items-center mt-3">
+                    <div class="ms-3">
+                        <h6 class="mb-0">John Doe</h6>
+                        <small class="text-muted">CTO, Tech Innovations</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card testimonial-card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <p class="card-text">"We've been able to integrate multiple LLM providers through a single API, which has greatly simplified our development process."</p>
+                <div class="d-flex align-items-center mt-3">
+                    <div class="ms-3">
+                        <h6 class="mb-0">Jane Smith</h6>
+                        <small class="text-muted">Lead Developer, AI Solutions</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card testimonial-card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <p class="card-text">"楽天LLMとの統合は、日本語のEコマース関連のクエリに対して素晴らしいパフォーマンスを発揮しています。"</p>
+                <div class="d-flex align-items-center mt-3">
+                    <div class="ms-3">
+                        <h6 class="mb-0">田中 太郎</h6>
+                        <small class="text-muted">マーケティング部長, Eコマース企業</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="row mb-5">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-5">
+                <h2 class="mb-4">Ready to get started?</h2>
+                <p class="lead mb-4">Create an account, add credit, and start using our API in minutes.</p>
+                <a href="#pricing" class="btn btn-gradient btn-lg">Get Started Now</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stripe Integration -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    // Stripe public key
+    const stripe = Stripe('{{ stripe_public_key }}');
+    
+    // USD pricing
+    document.getElementById('checkout-button-starter').addEventListener('click', function() {
+        fetch('/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                priceId: 'price_starter_usd',
+                amount: 10
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        })
+        .then(function(result) {
+            if (result.error) {
+                alert(result.error.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+        });
+    });
+    
+    document.getElementById('checkout-button-pro').addEventListener('click', function() {
+        fetch('/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                priceId: 'price_pro_usd',
+                amount: 50
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        })
+        .then(function(result) {
+            if (result.error) {
+                alert(result.error.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+        });
+    });
+    
+    document.getElementById('checkout-button-enterprise').addEventListener('click', function() {
+        fetch('/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                priceId: 'price_enterprise_usd',
+                amount: 200
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        })
+        .then(function(result) {
+            if (result.error) {
+                alert(result.error.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+        });
+    });
+    
+    // JPY pricing
+    document.getElementById('checkout-button-starter-jpy').addEventListener('click', function() {
+        fetch('/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                priceId: 'price_starter_jpy',
+                amount: 1000,
+                currency: 'jpy'
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        })
+        .then(function(result) {
+            if (result.error) {
+                alert(result.error.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+        });
+    });
+    
+    document.getElementById('checkout-button-pro-jpy').addEventListener('click', function() {
+        fetch('/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                priceId: 'price_pro_jpy',
+                amount: 5000,
+                currency: 'jpy'
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        })
+        .then(function(result) {
+            if (result.error) {
+                alert(result.error.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+        });
+    });
+    
+    document.getElementById('checkout-button-enterprise-jpy').addEventListener('click', function() {
+        fetch('/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                priceId: 'price_enterprise_jpy',
+                amount: 20000,
+                currency: 'jpy'
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        })
+        .then(function(result) {
+            if (result.error) {
+                alert(result.error.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+        });
+    });
+</script>
 {% endblock %}

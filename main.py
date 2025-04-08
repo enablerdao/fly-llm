@@ -4,9 +4,12 @@ from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from litellm.proxy.proxy_server import router as litellm_router
 from model_router import route_request
+import stripe
+from pydantic import BaseModel
+from typing import Optional
 from middleware import ModelRouterMiddleware
 import os
 import uuid
@@ -34,6 +37,15 @@ templates = Jinja2Templates(directory="templates")
 
 # Include LiteLLM router
 app.include_router(litellm_router, tags=["LiteLLM"])
+
+# Initialize Stripe
+stripe_api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+stripe_public_key = os.environ.get("STRIPE_PUBLIC_KEY", "")
+stripe.api_key = stripe_api_key
+
+# Stripe checkout success and cancel URLs
+stripe_success_url = os.environ.get("STRIPE_SUCCESS_URL", "https://litellm-proxy-yuki.fly.dev/payment-success")
+stripe_cancel_url = os.environ.get("STRIPE_CANCEL_URL", "https://litellm-proxy-yuki.fly.dev/payment-cancel")
 
 # Add CORS middleware
 app.add_middleware(
@@ -327,12 +339,104 @@ async def get_usage(key_id: Optional[str] = None, _: str = Depends(verify_api_ke
             "request_count": len(usage_logs)
         }
 
+# Stripe checkout session request model
+class CheckoutSessionRequest(BaseModel):
+    priceId: str
+    amount: float
+    currency: Optional[str] = "usd"
+
+# Create Stripe checkout session
+@app.post("/create-checkout-session")
+async def create_checkout_session(request: CheckoutSessionRequest):
+    try:
+        # Create a new checkout session
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": request.currency,
+                        "product_data": {
+                            "name": f"LiteLLM API Credit ({request.amount} {request.currency.upper()})",
+                            "description": "Credit for LiteLLM API usage",
+                        },
+                        "unit_amount": int(request.amount * 100) if request.currency == "usd" else int(request.amount),
+                    },
+                    "quantity": 1,
+                },
+            ],
+            mode="payment",
+            success_url=stripe_success_url,
+            cancel_url=stripe_cancel_url,
+            metadata={
+                "price_id": request.priceId,
+                "amount": str(request.amount),
+                "currency": request.currency
+            }
+        )
+        return {"id": checkout_session.id}
+    except Exception as e:
+        logger.error(f"Error creating checkout session: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Stripe webhook endpoint
+@app.post("/webhook")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, webhook_secret
+        )
+    except ValueError as e:
+        # Invalid payload
+        logger.error(f"Invalid payload: {str(e)}")
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        logger.error(f"Invalid signature: {str(e)}")
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    # Handle the checkout.session.completed event
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        
+        # Get customer details
+        customer_email = session.get("customer_details", {}).get("email", "")
+        amount = float(session.get("metadata", {}).get("amount", 0))
+        currency = session.get("metadata", {}).get("currency", "usd")
+        
+        # Add credit to the user's account
+        # This is where you would update your database to add credit to the user's account
+        logger.info(f"Adding {amount} {currency} credit to {customer_email}")
+        
+        # For demonstration purposes, we'll just log the payment
+        # In a real application, you would update your database
+        
+    return {"status": "success"}
+
+# Payment success page
+@app.get("/payment-success", response_class=HTMLResponse)
+async def payment_success(request: Request):
+    return templates.TemplateResponse("payment_success.html", {"request": request})
+
+# Payment cancel page
+@app.get("/payment-cancel", response_class=HTMLResponse)
+async def payment_cancel(request: Request):
+    return templates.TemplateResponse("payment_cancel.html", {"request": request})
+
 # Home page
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Home page"""
     host = request.headers.get("host", "litellm-proxy.fly.dev")
-    return templates.TemplateResponse("index.html", {"request": request, "host": host})
+    return templates.TemplateResponse("index.html", {
+        "request": request, 
+        "host": host,
+        "stripe_public_key": stripe_public_key
+    })
 
 # Admin page
 @app.get("/admin", response_class=HTMLResponse)

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Successful - LiteLLM Proxy{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-icon {
+        font-size: 5rem;
+        color: #28a745;
+        margin-bottom: 20px;
+    }
+    .success-card {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border-radius: 10px;
+        border: none;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #4a00e0, #8e2de2);
+        border: none;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #3a00b0, #7e1dd2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card success-card">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h1 class="mb-4">Payment Successful!</h1>
+                <p class="lead mb-4">Thank you for your payment. Your account has been credited and you can now use the LiteLLM API.</p>
+                <div class="mb-4">
+                    <p>Your API credits are now available for use. You can create API keys in the admin panel.</p>
+                </div>
+                <div class="d-flex justify-content-center">
+                    <a href="/" class="btn btn-outline-secondary me-3">Return to Home</a>
+                    <a href="/admin" class="btn btn-primary">Go to Admin Panel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
