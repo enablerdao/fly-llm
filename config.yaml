@@ -1,0 +1,173 @@
+model_list:
+  # OpenAI Models
+  - model_name: gpt-3.5-turbo
+    litellm_params:
+      model: openai/gpt-3.5-turbo
+      api_key: ${OPENAI_API_KEY}
+      max_tokens: 4000  # Token limit
+  
+  - model_name: gpt-4
+    litellm_params:
+      model: openai/gpt-4
+      api_key: ${OPENAI_API_KEY}
+      max_tokens: 4000  # Token limit
+
+  # Low cost model
+  - model_name: gpt-3.5-turbo-low-cost
+    litellm_params:
+      model: openai/gpt-3.5-turbo-0125
+      api_key: ${OPENAI_API_KEY}
+      max_tokens: 2000  # Stricter token limit
+
+  # Anthropic Claude Models
+  - model_name: claude-3-haiku
+    litellm_params:
+      model: anthropic/claude-3-haiku
+      api_key: ${ANTHROPIC_API_KEY}
+      max_tokens: 4000
+
+  - model_name: claude-3-sonnet
+    litellm_params:
+      model: anthropic/claude-3-sonnet
+      api_key: ${ANTHROPIC_API_KEY}
+      max_tokens: 4000
+
+  - model_name: claude-3-opus
+    litellm_params:
+      model: anthropic/claude-3-opus
+      api_key: ${ANTHROPIC_API_KEY}
+      max_tokens: 4000
+
+  # DeepSeek Models
+  - model_name: deepseek-chat
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: ${DEEPSEEK_API_KEY}
+      max_tokens: 4000
+
+  # Mistral Models
+  - model_name: mistral-large
+    litellm_params:
+      model: mistral/mistral-large-latest
+      api_key: ${MISTRAL_API_KEY}
+      max_tokens: 4000
+
+  - model_name: mistral-medium
+    litellm_params:
+      model: mistral/mistral-medium
+      api_key: ${MISTRAL_API_KEY}
+      max_tokens: 4000
+
+  # Google Gemini Models
+  - model_name: gemini-pro
+    litellm_params:
+      model: gemini/gemini-pro
+      api_key: ${GOOGLE_API_KEY}
+      max_tokens: 4000
+
+  # Self-hosted Models (Ollama)
+  - model_name: ollama-llama2
+    litellm_params:
+      model: ollama/llama2
+      api_base: ${OLLAMA_API_BASE}
+      max_tokens: 2000
+
+  # Self-hosted Models (vLLM)
+  - model_name: vllm-llama3
+    litellm_params:
+      model: vllm/llama3
+      api_base: ${VLLM_API_BASE}
+      max_tokens: 2000
+      
+  # Rakuten LLM (Self-hosted)
+  - model_name: rakuten-llm
+    litellm_params:
+      model: openai/custom-model
+      api_base: ${RAKUTEN_LLM_API_BASE}
+      max_tokens: 4000
+
+# Model fallback settings
+router_settings:
+  # Cost optimization fallbacks
+  fallbacks: [
+    {
+      "model": "gpt-4",
+      "fallback_model": "gpt-3.5-turbo"
+    },
+    {
+      "model": "claude-3-opus",
+      "fallback_model": "claude-3-sonnet"
+    },
+    {
+      "model": "claude-3-sonnet",
+      "fallback_model": "claude-3-haiku"
+    },
+    {
+      "model": "mistral-large",
+      "fallback_model": "mistral-medium"
+    }
+  ]
+
+# API key authentication
+api_key:
+  # If using dynamic API keys
+  use_dynamic_api_key: true
+  # Path to the database file for storing API keys
+  api_key_db_path: "/app/api_keys.json"
+
+# Server configuration
+server:
+  host: 0.0.0.0
+  port: 12000
+  # Rate limiting settings
+  rate_limit:
+    enabled: true
+    limit: 100  # Requests per minute
+    timeframe: 60  # Seconds
+
+# Cache settings
+cache:
+  type: "redis"
+  host: "localhost"
+  port: 6379
+  ttl: 3600  # Cache TTL in seconds
+
+# Budget management
+budget:
+  # Total budget limit
+  total: 100.0  # USD
+  # Per-user budget limit
+  user: 10.0  # USD
+
+# Environment variables
+environment_variables:
+  # OpenAI API key (will be set during deployment)
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+  DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+  MISTRAL_API_KEY: ${MISTRAL_API_KEY}
+  GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+  OLLAMA_API_BASE: ${OLLAMA_API_BASE}
+  VLLM_API_BASE: ${VLLM_API_BASE}
+
+# Logging configuration
+litellm_settings:
+  # Callback settings
+  success_callback: ["litellm.callbacks.track_cost_callback"]
+  # PII protection settings
+  drop_params: True
+  # Prompt preprocessing (PII masking)
+  pre_prompt_processing: True
+  # Response post-processing
+  post_response_processing: True
+  # Token limit
+  max_tokens_per_request: 4000
+  # Context window fallbacks
+  context_window_fallbacks: {
+    "gpt-4": "gpt-3.5-turbo",
+    "claude-3-opus": "claude-3-sonnet",
+    "claude-3-sonnet": "claude-3-haiku",
+    "mistral-large": "mistral-medium",
+    "deepseek-chat": "gpt-3.5-turbo",
+    "gemini-pro": "gpt-3.5-turbo"
+  }

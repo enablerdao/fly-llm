@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  litellm-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - API_KEYS_FILE=/app/data/api_keys.json
+      - ENABLE_CACHING=true
+      - CACHE_TTL=3600
+      - MAX_TOKENS_PER_REQUEST=4000
+      - RAKUTEN_LLM_API_BASE=http://rakuten-llm:8000
+    volumes:
+      - ./data:/app/data
+      - ./config.yaml:/app/config.yaml
+    depends_on:
+      - redis
+      - rakuten-llm
+
+  rakuten-llm:
+    build:
+      context: ./models/rakuten-llm
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_NAME=rinna/japanese-gpt-neox-3.6b-instruction-ppo
+      - TEMPERATURE=0.7
+      - TOP_P=0.9
+      - MAX_LENGTH=4096
+    volumes:
+      - ./models/cache:/app/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  redis-data:

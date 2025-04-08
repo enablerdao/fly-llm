@@ -1,0 +1,992 @@
+{% extends "base.html" %}
+
+{% block title %}LiteLLM Proxy - Admin Panel{% endblock %}
+
+{% block extra_css %}
+<style>
+    .api-key {
+        font-family: monospace;
+        word-break: break-all;
+    }
+    .hidden {
+        display: none;
+    }
+    .nav-tabs .nav-link {
+        color: #495057;
+    }
+    .nav-tabs .nav-link.active {
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    pre {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+    code {
+        font-family: 'Courier New', Courier, monospace;
+    }
+    .code-block {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .model-card {
+        margin-bottom: 20px;
+    }
+    .model-logo {
+        max-height: 40px;
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1>Admin Panel</h1>
+        <p class="lead">Manage API keys, view usage statistics, and learn how to use the LiteLLM Proxy</p>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="keys-tab" data-bs-toggle="tab" data-bs-target="#keys" type="button" role="tab" aria-controls="keys" aria-selected="true">API Keys</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="usage-tab" data-bs-toggle="tab" data-bs-target="#usage" type="button" role="tab" aria-controls="usage" aria-selected="false">Usage Statistics</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="guide-tab" data-bs-toggle="tab" data-bs-target="#guide" type="button" role="tab" aria-controls="guide" aria-selected="false">Usage Guide</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="models-tab" data-bs-toggle="tab" data-bs-target="#models" type="button" role="tab" aria-controls="models" aria-selected="false">LLM Models</button>
+    </li>
+</ul>
+
+<div class="tab-content" id="adminTabsContent">
+    <!-- API Keys Tab -->
+    <div class="tab-pane fade show active" id="keys" role="tabpanel" aria-labelledby="keys-tab">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">API Keys</h5>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createKeyModal">Create New Key</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="apiKeysTable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Key</th>
+                                        <th>Created</th>
+                                        <th>Expires</th>
+                                        <th>Budget</th>
+                                        <th>Usage</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="7" class="text-center">Loading API keys...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage Statistics Tab -->
+    <div class="tab-pane fade" id="usage" role="tabpanel" aria-labelledby="usage-tab">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Usage by Model</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="modelUsageTable">
+                                <thead>
+                                    <tr>
+                                        <th>Model</th>
+                                        <th>Requests</th>
+                                        <th>Cost</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="3" class="text-center">Loading usage data...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Total Usage</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body text-center">
+                                        <h3 id="totalRequests">-</h3>
+                                        <p class="mb-0">Total Requests</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body text-center">
+                                        <h3 id="totalCost">-</h3>
+                                        <p class="mb-0">Total Cost (USD)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage Guide Tab -->
+    <div class="tab-pane fade" id="guide" role="tabpanel" aria-labelledby="guide-tab">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Getting Started</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>LiteLLM Proxy provides a unified API for accessing various LLM providers. Follow these steps to get started:</p>
+                        
+                        <h6 class="mt-4">1. Create an API Key</h6>
+                        <p>Go to the <a href="#" onclick="document.getElementById('keys-tab').click()">API Keys</a> tab and click "Create New Key". You can set optional parameters like:</p>
+                        <ul>
+                            <li><strong>Expiration date</strong>: When the key will become invalid</li>
+                            <li><strong>Budget limit</strong>: Maximum spending allowed for this key</li>
+                            <li><strong>Allowed models</strong>: Restrict access to specific models</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">2. Make API Requests</h6>
+                        <p>Use your API key to make requests to the LiteLLM Proxy. The API is compatible with OpenAI's API format.</p>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Code Examples</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-pills mb-3" id="codeExampleTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="curl-tab" data-bs-toggle="pill" data-bs-target="#curl" type="button" role="tab" aria-controls="curl" aria-selected="true">cURL</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="python-tab" data-bs-toggle="pill" data-bs-target="#python" type="button" role="tab" aria-controls="python" aria-selected="false">Python</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="javascript-tab" data-bs-toggle="pill" data-bs-target="#javascript" type="button" role="tab" aria-controls="javascript" aria-selected="false">JavaScript</button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="codeExampleTabsContent">
+                            <!-- cURL Example -->
+                            <div class="tab-pane fade show active" id="curl" role="tabpanel" aria-labelledby="curl-tab">
+                                <h6>Chat Completion</h6>
+                                <div class="code-block">
+                                    <pre><code>curl -X POST https://{{ host }}/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-3.5-turbo",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "What is the capital of Japan?"}
+    ]
+  }'</code></pre>
+                                </div>
+                                
+                                <h6>Text Completion</h6>
+                                <div class="code-block">
+                                    <pre><code>curl -X POST https://{{ host }}/v1/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-3.5-turbo-instruct",
+    "prompt": "Write a poem about cherry blossoms",
+    "max_tokens": 150
+  }'</code></pre>
+                                </div>
+                                
+                                <h6>Embeddings</h6>
+                                <div class="code-block">
+                                    <pre><code>curl -X POST https://{{ host }}/v1/embeddings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "text-embedding-ada-002",
+    "input": "The food was delicious and the service was excellent."
+  }'</code></pre>
+                                </div>
+                            </div>
+                            
+                            <!-- Python Example -->
+                            <div class="tab-pane fade" id="python" role="tabpanel" aria-labelledby="python-tab">
+                                <h6>Using OpenAI Python Client</h6>
+                                <div class="code-block">
+                                    <pre><code>import openai
+
+# Configure the client
+client = openai.OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://{{ host }}/v1/"
+)
+
+# Chat completion
+chat_response = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What is the capital of Japan?"}
+    ]
+)
+print(chat_response.choices[0].message.content)
+
+# Text completion
+completion_response = client.completions.create(
+    model="gpt-3.5-turbo-instruct",
+    prompt="Write a poem about cherry blossoms",
+    max_tokens=150
+)
+print(completion_response.choices[0].text)
+
+# Embeddings
+embedding_response = client.embeddings.create(
+    model="text-embedding-ada-002",
+    input="The food was delicious and the service was excellent."
+)
+print(embedding_response.data[0].embedding)</code></pre>
+                                </div>
+                            </div>
+                            
+                            <!-- JavaScript Example -->
+                            <div class="tab-pane fade" id="javascript" role="tabpanel" aria-labelledby="javascript-tab">
+                                <h6>Using OpenAI JavaScript Client</h6>
+                                <div class="code-block">
+                                    <pre><code>import OpenAI from 'openai';
+
+// Configure the client
+const openai = new OpenAI({
+  apiKey: 'YOUR_API_KEY',
+  baseURL: 'https://{{ host }}/v1/'
+});
+
+// Chat completion
+async function getChatCompletion() {
+  const chatCompletion = await openai.chat.completions.create({
+    model: 'gpt-3.5-turbo',
+    messages: [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      { role: 'user', content: 'What is the capital of Japan?' }
+    ]
+  });
+  console.log(chatCompletion.choices[0].message.content);
+}
+
+// Text completion
+async function getTextCompletion() {
+  const completion = await openai.completions.create({
+    model: 'gpt-3.5-turbo-instruct',
+    prompt: 'Write a poem about cherry blossoms',
+    max_tokens: 150
+  });
+  console.log(completion.choices[0].text);
+}
+
+// Embeddings
+async function getEmbedding() {
+  const embedding = await openai.embeddings.create({
+    model: 'text-embedding-ada-002',
+    input: 'The food was delicious and the service was excellent.'
+  });
+  console.log(embedding.data[0].embedding);
+}
+
+getChatCompletion();
+getTextCompletion();
+getEmbedding();</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Advanced Features</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Automatic Model Selection</h6>
+                        <p>LiteLLM Proxy can automatically select the most appropriate model based on your request content, optimizing for cost and performance. To use this feature, specify <code>"auto"</code> as the model:</p>
+                        <div class="code-block">
+                            <pre><code>curl -X POST https://{{ host }}/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "auto",
+    "messages": [{"role": "user", "content": "What is the capital of Japan?"}]
+  }'</code></pre>
+                        </div>
+                        
+                        <p>The system will analyze your request and select the most appropriate model based on:</p>
+                        <ul>
+                            <li><strong>Language detection</strong>: Optimizes for non-English languages (e.g., Japanese content uses Claude models)</li>
+                            <li><strong>Code detection</strong>: Identifies programming tasks (GPT models are preferred for code)</li>
+                            <li><strong>Complexity analysis</strong>: Estimates task difficulty (simple tasks use cheaper models, complex tasks use more powerful models)</li>
+                            <li><strong>Length consideration</strong>: Longer inputs may require more capable models</li>
+                        </ul>
+                        
+                        <p>You can also provide preferences to guide the selection:</p>
+                        <div class="code-block">
+                            <pre><code>{
+  "model": "auto",
+  "messages": [...],
+  "user_preferences": {
+    "prefer_quality": true,  // Prioritize quality over cost
+    "max_cost": 0.05         // Set maximum cost per request
+  }
+}</code></pre>
+                        </div>
+                        
+                        <h6>Response Caching</h6>
+                        <p>LiteLLM Proxy automatically caches responses to identical requests, reducing costs and improving response times. To bypass the cache, add a unique identifier to your request:</p>
+                        <div class="code-block">
+                            <pre><code>{
+  "model": "gpt-3.5-turbo",
+  "messages": [...],
+  "user": "unique-session-id-123"  // This makes the request unique
+}</code></pre>
+                        </div>
+                        
+                        <h6>Model Fallbacks</h6>
+                        <p>If a model is unavailable, LiteLLM can automatically fall back to alternative models. To use this feature, specify multiple models in your request:</p>
+                        <div class="code-block">
+                            <pre><code>{
+  "model": ["gpt-4", "gpt-3.5-turbo", "claude-2"],  // Will try each model in order
+  "messages": [...]
+}</code></pre>
+                        </div>
+                        
+                        <h6>Budget Management</h6>
+                        <p>Each API key can have a maximum budget. Once the budget is reached, the key will no longer work. This helps prevent unexpected costs.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LLM Models Tab -->
+    <div class="tab-pane fade" id="models" role="tabpanel" aria-labelledby="models-tab">
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Supported LLM Providers</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>LiteLLM Proxy supports multiple LLM providers. To use a specific provider, you need to set up the corresponding API key in the server configuration.</p>
+                        
+                        <div class="row mt-4">
+                            <!-- OpenAI -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card model-card">
+                                    <div class="card-header d-flex align-items-center">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/1024px-OpenAI_Logo.svg.png" alt="OpenAI Logo" class="model-logo">
+                                        <h5 class="mb-0">OpenAI</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Available Models:</strong></p>
+                                        <ul>
+                                            <li>gpt-4</li>
+                                            <li>gpt-4-turbo</li>
+                                            <li>gpt-3.5-turbo</li>
+                                            <li>text-embedding-ada-002</li>
+                                        </ul>
+                                        <p><strong>Environment Variable:</strong> <code>OPENAI_API_KEY</code></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Anthropic -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card model-card">
+                                    <div class="card-header d-flex align-items-center">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Anthropic_logo.svg/1200px-Anthropic_logo.svg.png" alt="Anthropic Logo" class="model-logo">
+                                        <h5 class="mb-0">Anthropic</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Available Models:</strong></p>
+                                        <ul>
+                                            <li>claude-3-opus</li>
+                                            <li>claude-3-sonnet</li>
+                                            <li>claude-3-haiku</li>
+                                            <li>claude-2</li>
+                                        </ul>
+                                        <p><strong>Environment Variable:</strong> <code>ANTHROPIC_API_KEY</code></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Google -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card model-card">
+                                    <div class="card-header d-flex align-items-center">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png" alt="Google Logo" class="model-logo">
+                                        <h5 class="mb-0">Google</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Available Models:</strong></p>
+                                        <ul>
+                                            <li>gemini-pro</li>
+                                            <li>gemini-pro-vision</li>
+                                            <li>text-bison</li>
+                                        </ul>
+                                        <p><strong>Environment Variable:</strong> <code>GOOGLE_API_KEY</code></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Cohere -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card model-card">
+                                    <div class="card-header d-flex align-items-center">
+                                        <img src="https://assets-global.website-files.com/64f6f2c0e3f4c5a91c1e823a/654693d569494a7d8055d071_cohere.svg" alt="Cohere Logo" class="model-logo">
+                                        <h5 class="mb-0">Cohere</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Available Models:</strong></p>
+                                        <ul>
+                                            <li>command</li>
+                                            <li>command-light</li>
+                                            <li>embed-english</li>
+                                        </ul>
+                                        <p><strong>Environment Variable:</strong> <code>COHERE_API_KEY</code></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Azure OpenAI -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card model-card">
+                                    <div class="card-header d-flex align-items-center">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Microsoft_Azure.svg/1200px-Microsoft_Azure.svg.png" alt="Azure Logo" class="model-logo">
+                                        <h5 class="mb-0">Azure OpenAI</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Available Models:</strong></p>
+                                        <ul>
+                                            <li>azure/gpt-4</li>
+                                            <li>azure/gpt-35-turbo</li>
+                                            <li>azure/text-embedding-ada-002</li>
+                                        </ul>
+                                        <p><strong>Environment Variables:</strong></p>
+                                        <ul>
+                                            <li><code>AZURE_API_KEY</code></li>
+                                            <li><code>AZURE_API_BASE</code></li>
+                                            <li><code>AZURE_API_VERSION</code></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mistral AI -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card model-card">
+                                    <div class="card-header d-flex align-items-center">
+                                        <img src="https://mistral.ai/images/logo.svg" alt="Mistral AI Logo" class="model-logo">
+                                        <h5 class="mb-0">Mistral AI</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Available Models:</strong></p>
+                                        <ul>
+                                            <li>mistral-medium</li>
+                                            <li>mistral-small</li>
+                                            <li>mistral-tiny</li>
+                                        </ul>
+                                        <p><strong>Environment Variable:</strong> <code>MISTRAL_API_KEY</code></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Adding New LLM Providers</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>To add a new LLM provider to your LiteLLM Proxy, you need to:</p>
+                        
+                        <ol>
+                            <li>Set the corresponding API key as an environment variable on the server</li>
+                            <li>Update the config.yaml file to include the new model</li>
+                            <li>Restart the LiteLLM Proxy service</li>
+                        </ol>
+                        
+                        <p>For example, to add support for Mistral AI models:</p>
+                        <div class="code-block">
+                            <pre><code># Using fly.io CLI
+fly secrets set MISTRAL_API_KEY=your-mistral-api-key</code></pre>
+                        </div>
+                        
+                        <p>After setting the API key, you can use Mistral models in your requests:</p>
+                        <div class="code-block">
+                            <pre><code>curl -X POST https://{{ host }}/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "mistral-medium",
+    "messages": [{"role": "user", "content": "Tell me about quantum computing"}]
+  }'</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Self-Hosted LLM Integration</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>LiteLLM Proxy can connect to your self-hosted LLM servers. Here are some common setups:</p>
+                        
+                        <h6 class="mt-4">1. Ollama Integration</h6>
+                        <p><a href="https://ollama.ai/" target="_blank">Ollama</a> is a tool for running LLMs locally. To connect LiteLLM to your Ollama server:</p>
+                        <div class="code-block">
+                            <pre><code># 1. Set the Ollama API base URL
+fly secrets set OLLAMA_API_BASE=http://your-ollama-server:11434
+
+# 2. Add to config.yaml
+- model_name: ollama-llama2
+  litellm_params:
+    model: ollama/llama2
+    api_base: ${OLLAMA_API_BASE}
+    max_tokens: 2000</code></pre>
+                        </div>
+                        
+                        <h6 class="mt-4">2. vLLM Integration</h6>
+                        <p><a href="https://github.com/vllm-project/vllm" target="_blank">vLLM</a> is a high-throughput and memory-efficient inference engine. To connect LiteLLM to your vLLM server:</p>
+                        <div class="code-block">
+                            <pre><code># 1. Set the vLLM API base URL
+fly secrets set VLLM_API_BASE=http://your-vllm-server:8000
+
+# 2. Add to config.yaml
+- model_name: vllm-llama3
+  litellm_params:
+    model: vllm/llama3
+    api_base: ${VLLM_API_BASE}
+    max_tokens: 2000</code></pre>
+                        </div>
+                        
+                        <h6 class="mt-4">3. Local LLM Server with OpenAI-compatible API</h6>
+                        <p>Many local LLM servers (like <a href="https://github.com/lm-sys/FastChat" target="_blank">FastChat</a>, <a href="https://github.com/ggerganov/llama.cpp" target="_blank">llama.cpp</a> server) implement the OpenAI API format:</p>
+                        <div class="code-block">
+                            <pre><code># 1. Set the local server URL
+fly secrets set LOCAL_LLM_API_BASE=http://your-local-server:8080
+
+# 2. Add to config.yaml
+- model_name: local-llama3
+  litellm_params:
+    model: openai/custom-model
+    api_base: ${LOCAL_LLM_API_BASE}
+    max_tokens: 2000</code></pre>
+                        </div>
+                        
+                        <h6 class="mt-4">4. Using Docker Compose for Self-Hosted Setup</h6>
+                        <p>For a complete self-hosted setup, you can use Docker Compose to run both LiteLLM Proxy and your LLM server:</p>
+                        <div class="code-block">
+                            <pre><code># docker-compose.yml example
+version: '3'
+services:
+  litellm-proxy:
+    image: ghcr.io/berriai/litellm:main
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=your-key
+      - LOCAL_LLM_API_BASE=http://local-llm:8080
+    volumes:
+      - ./config.yaml:/app/config.yaml
+    depends_on:
+      - local-llm
+      
+  local-llm:
+    image: your-local-llm-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./models:/models</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create API Key Modal -->
+<div class="modal fade" id="createKeyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New API Key</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createKeyForm">
+                    <div class="mb-3">
+                        <label for="keyName" class="form-label">Key Name</label>
+                        <input type="text" class="form-control" id="keyName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="keyExpires" class="form-label">Expires (optional)</label>
+                        <input type="datetime-local" class="form-control" id="keyExpires">
+                    </div>
+                    <div class="mb-3">
+                        <label for="keyBudget" class="form-label">Max Budget (USD, optional)</label>
+                        <input type="number" class="form-control" id="keyBudget" min="0" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label for="keyModels" class="form-label">Allowed Models (optional, comma-separated)</label>
+                        <input type="text" class="form-control" id="keyModels" placeholder="gpt-3.5-turbo,gpt-4">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="createKeyBtn">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Key Created Modal -->
+<div class="modal fade" id="keyCreatedModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">API Key Created</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Your new API key has been created. Please save it now as you won't be able to see it again:</p>
+                <div class="alert alert-success api-key" id="newApiKey"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Done</button>
+                <button type="button" class="btn btn-secondary" id="copyKeyBtn">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Key Confirmation Modal -->
+<div class="modal fade" id="deleteKeyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the API key <span id="deleteKeyName" class="fw-bold"></span>?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Admin Login</h5>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="apiKey" class="form-label">Admin API Key</label>
+                        <input type="password" class="form-control" id="apiKey" required>
+                    </div>
+                    <div class="alert alert-danger hidden" id="loginError"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="loginBtn">Login</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let adminApiKey = localStorage.getItem('adminApiKey');
+    
+    // Show login modal if no API key is stored
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!adminApiKey) {
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+        } else {
+            loadData();
+        }
+    });
+    
+    // Login form submission
+    document.getElementById('loginBtn').addEventListener('click', function() {
+        const apiKey = document.getElementById('apiKey').value;
+        if (!apiKey) return;
+        
+        // Verify the API key
+        fetch('/api/keys', {
+            headers: {
+                'Authorization': `Bearer ${apiKey}`
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                adminApiKey = apiKey;
+                localStorage.setItem('adminApiKey', apiKey);
+                bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                loadData();
+            } else {
+                document.getElementById('loginError').textContent = 'Invalid API key';
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            document.getElementById('loginError').textContent = 'Error: ' + error.message;
+            document.getElementById('loginError').classList.remove('hidden');
+        });
+    });
+    
+    // Load all data
+    function loadData() {
+        loadApiKeys();
+        loadUsageStats();
+    }
+    
+    // Load API keys
+    function loadApiKeys() {
+        fetch('/api/keys', {
+            headers: {
+                'Authorization': `Bearer ${adminApiKey}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.querySelector('#apiKeysTable tbody');
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No API keys found</td></tr>';
+                return;
+            }
+            
+            data.forEach(key => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${key.name}</td>
+                    <td class="api-key">${maskApiKey(key.key)}</td>
+                    <td>${new Date(key.created_at).toLocaleString()}</td>
+                    <td>${key.expires_at ? new Date(key.expires_at).toLocaleString() : 'Never'}</td>
+                    <td>${key.max_budget ? '$' + key.max_budget.toFixed(2) : 'Unlimited'}</td>
+                    <td>$${key.current_usage.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger delete-key" data-key-id="${key.key}" data-key-name="${key.name}">Delete</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-key').forEach(button => {
+                button.addEventListener('click', function() {
+                    const keyId = this.getAttribute('data-key-id');
+                    const keyName = this.getAttribute('data-key-name');
+                    document.getElementById('deleteKeyName').textContent = keyName;
+                    document.getElementById('confirmDeleteBtn').setAttribute('data-key-id', keyId);
+                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteKeyModal'));
+                    deleteModal.show();
+                });
+            });
+        })
+        .catch(error => {
+            console.error('Error loading API keys:', error);
+        });
+    }
+    
+    // Load usage statistics
+    function loadUsageStats() {
+        fetch('/api/usage', {
+            headers: {
+                'Authorization': `Bearer ${adminApiKey}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Update total stats
+            document.getElementById('totalRequests').textContent = data.request_count;
+            document.getElementById('totalCost').textContent = '$' + data.total_cost.toFixed(2);
+            
+            // Update model usage table
+            const tableBody = document.querySelector('#modelUsageTable tbody');
+            tableBody.innerHTML = '';
+            
+            if (Object.keys(data.model_usage).length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No usage data found</td></tr>';
+                return;
+            }
+            
+            for (const [model, stats] of Object.entries(data.model_usage)) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${model}</td>
+                    <td>${stats.requests}</td>
+                    <td>$${stats.cost.toFixed(2)}</td>
+                `;
+                tableBody.appendChild(row);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading usage stats:', error);
+        });
+    }
+    
+    // Create new API key
+    document.getElementById('createKeyBtn').addEventListener('click', function() {
+        const name = document.getElementById('keyName').value;
+        if (!name) return;
+        
+        const expires = document.getElementById('keyExpires').value;
+        const budget = document.getElementById('keyBudget').value;
+        const modelsInput = document.getElementById('keyModels').value;
+        
+        const payload = {
+            name: name
+        };
+        
+        if (expires) {
+            payload.expires_at = new Date(expires).toISOString();
+        }
+        
+        if (budget) {
+            payload.max_budget = parseFloat(budget);
+        }
+        
+        if (modelsInput) {
+            payload.models = modelsInput.split(',').map(m => m.trim());
+        }
+        
+        fetch('/api/keys', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${adminApiKey}`
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Close the create modal
+            bootstrap.Modal.getInstance(document.getElementById('createKeyModal')).hide();
+            
+            // Show the new key in the created modal
+            document.getElementById('newApiKey').textContent = data.key;
+            const createdModal = new bootstrap.Modal(document.getElementById('keyCreatedModal'));
+            createdModal.show();
+            
+            // Reset the form
+            document.getElementById('createKeyForm').reset();
+            
+            // Reload the API keys
+            loadApiKeys();
+        })
+        .catch(error => {
+            console.error('Error creating API key:', error);
+            alert('Error creating API key: ' + error.message);
+        });
+    });
+    
+    // Delete API key
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        const keyId = this.getAttribute('data-key-id');
+        
+        fetch(`/api/keys/${keyId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${adminApiKey}`
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                // Close the delete modal
+                bootstrap.Modal.getInstance(document.getElementById('deleteKeyModal')).hide();
+                
+                // Reload the API keys
+                loadApiKeys();
+            } else {
+                throw new Error('Failed to delete API key');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting API key:', error);
+            alert('Error deleting API key: ' + error.message);
+        });
+    });
+    
+    // Copy API key to clipboard
+    document.getElementById('copyKeyBtn').addEventListener('click', function() {
+        const keyText = document.getElementById('newApiKey').textContent;
+        navigator.clipboard.writeText(keyText)
+            .then(() => {
+                this.textContent = 'Copied!';
+                setTimeout(() => {
+                    this.textContent = 'Copy to Clipboard';
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+    });
+    
+    // Helper function to mask API key
+    function maskApiKey(key) {
+        if (key.length <= 8) return key;
+        return key.substring(0, 4) + '...' + key.substring(key.length - 4);
+    }
+</script>
+{% endblock %}

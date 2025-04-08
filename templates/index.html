@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}LiteLLM Proxy - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 text-center mb-5">
+        <h1 class="display-4">Welcome to LiteLLM Proxy</h1>
+        <p class="lead">A secure and cost-efficient proxy for Large Language Models</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Privacy Protection</h5>
+                <p class="card-text">Automatically detects and masks personal identifiable information (PII) such as email addresses, phone numbers, and credit card numbers.</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Email masking</li>
+                    <li class="list-group-item">Phone number protection</li>
+                    <li class="list-group-item">Credit card security</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Cost Optimization</h5>
+                <p class="card-text">Reduce your LLM costs with intelligent caching, budget management, and model fallbacks.</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Response caching</li>
+                    <li class="list-group-item">Budget controls</li>
+                    <li class="list-group-item">Model fallbacks</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">API Management</h5>
+                <p class="card-text">Create and manage API keys with fine-grained controls and usage tracking.</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">API key generation</li>
+                    <li class="list-group-item">Usage statistics</li>
+                    <li class="list-group-item">Rate limiting</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Quick Start Guide</h5>
+            </div>
+            <div class="card-body">
+                <h6>1. Get your API key</h6>
+                <p>Visit the <a href="/admin">Admin Panel</a> to create or manage API keys.</p>
+                
+                <h6>2. Make API requests</h6>
+                <div class="bg-light p-3 rounded">
+                    <pre><code>curl -X POST https://{{ host }}/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-3.5-turbo",
+    "messages": [{"role": "user", "content": "Hello, how are you?"}]
+  }'</code></pre>
+                </div>
+                
+                <h6>3. View API documentation</h6>
+                <p>Check the <a href="/docs">API Documentation</a> for detailed information about available endpoints.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
